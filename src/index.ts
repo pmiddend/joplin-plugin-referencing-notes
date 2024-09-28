@@ -144,7 +144,7 @@ joplin.plugins.register({
 				let useManualHint = await joplin.settings.value('myBacklinksCustomSettingUseHint')
 				let ignoreListArray = await joplin.settings.value('myBacklinksCustomSettingIgnoreList');
 				while (has_more) {
-					notes = await joplin.data.get(['search'], { query: data.id, fields: ['id', 'title', 'body'], page: page });
+					notes = await joplin.data.get(['search'], { query: data.id, fields: ['id', 'title', 'body', 'parent_id'], page: page });
 					
 					for (let i = 0; i < notes.items.length; i++) {
 						let element = notes.items[i];
@@ -152,7 +152,8 @@ joplin.plugins.register({
 						//references = references + "\n" + `[${escapeTitleText(element.title)}](:/${element.id})`;
 						let inIgnoreList = ignoreListArray.includes(element.id)
 						if (!(ignore || inIgnoreList)) {
-							references = references + "\n" + `[${escapeTitleText(element.title)}](:/${element.id})`;
+							const parent = await joplin.data.get(['folders', element.parent_id], { fields: ['title'] });
+							references = references + "\n" +	`${escapeTitleText(parent.title)}/[${escapeTitleText(element.title)}](:/${element.id})`;
 							thereAreNotes = true
 						}
 					}
@@ -325,7 +326,7 @@ joplin.plugins.register({
 				let thereAreAutoBacklinks = false
 				
 				while (has_more) {
-					notes = await joplin.data.get(['search'], { query: data.id, fields: ['id', 'title', 'body'], page: page });
+					notes = await joplin.data.get(['search'], { query: data.id, fields: ['id', 'title', 'body', 'parent_id'], page: page });
 					console.log(notes)
 					let ignoreListArray = await joplin.settings.value('myBacklinksCustomSettingIgnoreList');
 					for (let i = 0; i < notes.items.length; i++) {
@@ -336,8 +337,8 @@ joplin.plugins.register({
 						//references = references + "\n" + `[${escapeTitleText(element.title)}](:/${element.id})`;
 						let inIgnoreList = ignoreListArray.includes(element.id)
 						if (!(ignore || inIgnoreList)) {
-							
-							references = references + "" + `${joplinIcon}<a href="#" onclick="webviewApi.postMessage('${contentScriptId}', {type:'openNote',noteId:'${element.id}'})">${escapeTitleText(element.title)}</a><br>`;
+							const parent = await joplin.data.get(['folders', element.parent_id], { fields: ['title'] });
+							references = references + "" + `${joplinIcon}<a href="#" onclick="webviewApi.postMessage('${contentScriptId}', {type:'openNote',noteId:'${element.id}'})">${escapeTitleText(parent.title)}/${escapeTitleText(element.title)}</a><br>`;
 							thereAreAutoBacklinks = true
 						}
 
